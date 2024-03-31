@@ -94,6 +94,15 @@ def compute_loss(output, pred_box, gt_box, gt_mask, num_boxes, num_classes, grid
     # This is implementation for the loss_obj
     # Follow this example to compute other losses
     loss_obj = torch.sum(box_mask * torch.pow(box_confidence - output[:, 4:5*num_boxes:5], 2.0))
+    noobj = torch.ones_like(box_mask)
+    noobj[(box_mask == 1).nonzero(as_tuple=True)] = 0
+    loss_noobj = weight_noobj * torch.sum(noobj * torch.pow(box_confidence - output[:, 4:5*num_boxes:5], 2.0))
+
+    loss_x = weight_coord * torch.sum(box_mask * torch.pow(gt_box[:, 0:5*num_boxes:5] - pred_box[:, 0:5*num_boxes:5], 2.0))
+    loss_y = weight_coord * torch.sum(box_mask * torch.pow(gt_box[:, 1:5*num_boxes:5] - pred_box[:, 1:5*num_boxes:5], 2.0))
+    loss_w = weight_coord * torch.sum(box_mask * torch.pow(gt_box[:, 2:5*num_boxes:5] - pred_box[:, 2:5*num_boxes:5], 2.0))
+    loss_h = weight_coord * torch.sum(box_mask * torch.pow(gt_box[:, 3:5*num_boxes:5] - pred_box[:, 3:5*num_boxes:5], 2.0))
+    loss_cls = weight_coord * torch.sum(box_mask * torch.pow(gt_box[:, 4:5*num_boxes:5] - pred_box[:, 4:5*num_boxes:5], 2.0))
 
     ### ADD YOUR CODE HERE ###
     # Use weight_coord and weight_noobj defined above
