@@ -69,8 +69,6 @@ class CrackerBox(data.Dataset):
     
         # gt file
         filename_gt = self.gt_paths[idx]
-        # print(filename_gt)
-        # image_blob = filename_gt.split("-")[0] + ".jpg"
         image_blob = filename_gt.split("-")[0] + ".jpg"
         # print(image_blob)
         image_blob = cv2.imread(image_blob) # read the image [height, width, channels], channels is BGR
@@ -86,6 +84,7 @@ class CrackerBox(data.Dataset):
         centery = (y1 + y2) / 2 / self.height
         w = (x2 - x1) / self.width
         h = (y2 - y1) / self.height
+        # get the indices of the cell where the center resides
         index_centerx, index_centery = int(centerx * self.yolo_grid_num), int(centery * self.yolo_grid_num)
         box = np.array([centerx * self.yolo_grid_num - index_centerx, centery * self.yolo_grid_num - index_centery, w, h, 1])
         gt_box_blob = np.zeros((5, self.yolo_grid_num, self.yolo_grid_num), dtype=np.float32)
