@@ -15,6 +15,8 @@ import glob
 import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
+from pathlib import Path
+
 
 
 # The dataset class
@@ -67,11 +69,32 @@ class CrackerBox(data.Dataset):
     
         # gt file
         filename_gt = self.gt_paths[idx]
+        # print(filename_gt)
+        # image_blob = filename_gt.split("-")[0] + ".jpg"
+        image_blob = filename_gt.split("-")[0] + ".jpg"
+        # print(image_blob)
+        image_blob = cv2.imread(image_blob) # read the image [height, width, channels], channels is BGR
+        image_blob = cv2.resize(image_blob, (self.yolo_image_size, self.yolo_image_size))
+        # image_blob = cv2.cvtColor(image_blob, cv2.COLOR_BGR2RGB).astype(np.float32) # convert the channels
+        image_blob = ((image_blob - self.pixel_mean) / 255).transpose(2,0,1) # swap the dimensions
+        image_blob = torch.from_numpy(image_blob)
 
-        
-        ### ADD YOUR CODE HERE ###
+        text = open(filename_gt, "r").readlines()[0].strip().split()[:4]
+        x1, y1, x2, y2 = map(np.float32, text)
 
-        # this is the sample dictionary to be returned from this function
+        centerx = (x1 + x2) / 2 / self.width
+        centery = (y1 + y2) / 2 / self.height
+        w = (x2 - x1) / self.width
+        h = (y2 - y1) / self.height
+        index_centerx, index_centery = int(centerx * self.yolo_grid_num), int(centery * self.yolo_grid_num)
+        box = np.array([centerx * self.yolo_grid_num - index_centerx, centery * self.yolo_grid_num - index_centery, w, h, 1])
+        gt_box_blob = np.zeros((5, self.yolo_grid_num, self.yolo_grid_num), dtype=np.float32)
+        gt_box_blob[:, index_centery, index_centerx] = box
+
+        gt_mask_blob = np.zeros((self.yolo_grid_num, self.yolo_grid_num), dtype=np.float32)
+
+        gt_mask_blob[index_centery, index_centerx] = 1
+
         sample = {'image': image_blob,
                   'gt_box': gt_box_blob,
                   'gt_mask': gt_mask_blob}
